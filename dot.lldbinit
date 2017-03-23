@@ -1,0 +1,2 @@
+command script import /Users/ooba/github/swift_lldb_plugin/json.py --allow-reload
+command script import /Users/ooba/github/swift_lldb_plugin/curl.py --allow-reload
