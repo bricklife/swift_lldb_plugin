@@ -5,13 +5,12 @@ import lldb
 def process(debugger, command, result, internal_dict):
     lldb.debugger.HandleCommand("""
     expr -l swift --
-    func $process(object: AnyObject) {
-        func json(object: AnyObject) -> String {
-            if let data = try? NSJSONSerialization.dataWithJSONObject(object, options: .PrettyPrinted) {
-                return String(data: data, encoding: NSUTF8StringEncoding) ?? ""
-            }
-            else {
-                return String(object)
+    func $process(object: Any) {
+        func json(object: Any) -> String {
+            if let data = try? JSONSerialization.data(withJSONObject: object, options: .prettyPrinted) {
+                return String(data: data, encoding: String.Encoding.utf8) ?? ""
+            } else {
+                return String(describing: object)
             }
         }
 

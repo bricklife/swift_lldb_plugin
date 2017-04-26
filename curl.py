@@ -5,19 +5,19 @@ import lldb
 def process(debugger, command, result, internal_dict):
     lldb.debugger.HandleCommand("""
 expr -l swift --
-func $process(URLRequest: NSURLRequest) {
-    func curl(URLRequest: NSURLRequest) -> String {
-        guard let URLString = URLRequest.URL?.absoluteString else {
+func $process(_ urlRequest: URLRequest) {
+    func curl(_ urlRequest: URLRequest) -> String {
+        var components = ["$ curl -i"]
+
+        guard let urlString = urlRequest.url?.absoluteString else {
             return "$ curl command could not be created"
         }
 
-        var components = ["$ curl -i \\"\\(URLString)\\""]
-
-        if let HTTPMethod = URLRequest.HTTPMethod where HTTPMethod != "GET" {
-            components.append("-X \\(HTTPMethod)")
+        if let httpMethod = urlRequest.httpMethod, httpMethod != "GET" {
+            components.append("-X \\(httpMethod)")
         }
 
-        if let headerFields = URLRequest.allHTTPHeaderFields {
+        if let headerFields = urlRequest.allHTTPHeaderFields {
             for (field, value) in headerFields {
                 switch field {
                 case "Cookie":
@@ -28,20 +28,22 @@ func $process(URLRequest: NSURLRequest) {
             }
         }
 
-        if let
-            HTTPBodyData = URLRequest.HTTPBody,
-            HTTPBody = String(data: HTTPBodyData, encoding: NSUTF8StringEncoding) {
-            let escapedBody = HTTPBody.stringByReplacingOccurrencesOfString("\\"", withString: "\\\\\\"")
+        if let httpBodyData = urlRequest.httpBody,
+            let httpBody = String(data: httpBodyData, encoding: String.Encoding.utf8) {
+            let escapedBody = httpBody.replacingOccurrences(of: "\\"", with: "\\\\\\"")
             components.append("-d \\"\\(escapedBody)\\"")
         }
 
-        return components.joinWithSeparator(" \\\\\\n\\t")
+        components.append("\\"\\(urlString)\\"")
+
+        return components.joined(separator: " \\\\\\n\\t")
     }
 
-    Swift.print(curl(URLRequest))
+    Swift.print(curl(urlRequest))
 }
     """.strip())
-    lldb.debugger.HandleCommand('expr -l swift -- $process(' + command + ')')
+    expr = 'expr -l swift -- $process(' + command + ')'
+    lldb.debugger.HandleCommand(expr)
 
 def __lldb_init_module(debugger,internal_dict):
     debugger.HandleCommand("command script add -f curl.process curl")
